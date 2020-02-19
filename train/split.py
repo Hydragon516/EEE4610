@@ -46,8 +46,8 @@ def select_list(img_lists, target_num, selected_lung_list, train_flag):
     return(taget_lung, target_list)
 
 def split_img_set(img_path, mask_path, val_num, test_num):
-    img_lists = np.array(os.walk(img_path).__next__()[2])
-    mask_lists = np.array(os.walk(mask_path).__next__()[2])
+    img_lists = sorted(np.array(os.walk(img_path).__next__()[2]))
+    mask_lists = sorted(np.array(os.walk(mask_path).__next__()[2]))
 
     val_img_lung, val_img_lists = select_list(img_lists, val_num, [], False)
     test_img_lung, test_img_lists = select_list(img_lists, test_num, val_img_lung, False)
@@ -57,6 +57,7 @@ def split_img_set(img_path, mask_path, val_num, test_num):
     return val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists
 
 if __name__ is "__main__":
-    img_path="./Crop_Centered/Crop_image"
-    mask_path="./Crop_Centered/Crop_mask"
+    img_path="./Crop_Centered/image"
+    mask_path="./Crop_Centered/mask"
     val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_img_set(img_path, mask_path, 500*4, 1000*4)
+    print(len(val_img_lists), len(test_img_lists), len(train_img_lists))
