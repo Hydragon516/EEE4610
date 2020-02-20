@@ -1,6 +1,7 @@
 import glob
 import os
 import numpy as np
+import pickle
 
 def mapping(target, range_min, range_max):
     return (target * (range_max - range_min)) + range_min
@@ -46,8 +47,8 @@ def select_list(img_lists, target_num, selected_lung_list, train_flag):
     return(taget_lung, target_list)
 
 def split_img_set(img_path, mask_path, val_num, test_num):
-    img_lists = sorted(np.array(os.walk(img_path).__next__()[2]))
-    mask_lists = sorted(np.array(os.walk(mask_path).__next__()[2]))
+    img_lists = np.array(sorted(os.walk(img_path).__next__()[2]))
+    mask_lists = np.array(sorted(os.walk(mask_path).__next__()[2]))
 
     val_img_lung, val_img_lists = select_list(img_lists, val_num, [], False)
     test_img_lung, test_img_lists = select_list(img_lists, test_num, val_img_lung, False)
@@ -56,8 +57,32 @@ def split_img_set(img_path, mask_path, val_num, test_num):
 
     return val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists
 
+def split_test_set(img_path, mask_path, test_num):
+    img_lists = np.array(sorted(os.walk(img_path).__next__()[2]))
+    mask_lists = np.array(sorted(os.walk(mask_path).__next__()[2]))
+
+    test_img_lung, test_img_lists = select_list(img_lists, test_num, [], False)
+    train_img_lung, train_img_lists = select_list(img_lists, 0, test_img_lung, True)
+    print(len(test_img_lists), len(train_img_lists))
+    save_dataset(test_img_lung, test_img_lists, train_img_lung, train_img_lists)
+
+    return test_img_lung, test_img_lists, train_img_lung, train_img_lists
+
+def save_dataset(test_img_lung, test_img_lists, train_img_lung, train_img_lists):
+    lung_num = [test_img_lung, test_img_lists, train_img_lung, train_img_lists]
+    with open('dataset.pickle', 'wb') as f:
+        pickle.dump(lung_num, f)
+        print("save dataset")
+
+def load_dataset():
+    with open('dataset.pickle', 'rb') as f:
+        lung_num = pickle.load(f)
+        print("load dataset")
+    return lung_num[0], lung_num[1], lung_num[2], lung_num[3]
+
 if __name__ is "__main__":
-    img_path="./Crop_Centered/image"
-    mask_path="./Crop_Centered/mask"
-    val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_img_set(img_path, mask_path, 500*4, 1000*4)
-    print(len(val_img_lists), len(test_img_lists), len(train_img_lists))
+    img_path="./remove_250/image"
+    mask_path="./remove_250/mask"
+    #val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_img_set(img_path, mask_path, 500*4, 1000*4)
+    test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_test_set(img_path, mask_path, 500*4)
+    #a, b, c ,d = load_dataset()
