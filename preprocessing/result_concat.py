@@ -15,27 +15,37 @@ def make_folder(folder_path):
 def make_concat_img(img_path, img, gt, seg):
     seg_ori = seg.copy()
 
-    seg_ori_color = img.copy()
-    seg_ori_color[:,:,0] = seg_ori
-    seg_ori_color[:,:,1] = seg_ori
-    seg_ori_color[:,:,2] = seg_ori
+    seg_ori_white = img.copy()
+    seg_ori_white[:,:,0] = seg_ori
+    seg_ori_white[:,:,1] = seg_ori
+    seg_ori_white[:,:,2] = seg_ori
+
+    seg_ori_r = img.copy()
+    seg_ori_r[:,:,0] = 0
+    seg_ori_r[:,:,1] = seg_ori
+    seg_ori_r[:,:,2] = 0
 
     seg_edge = cv2.Canny(seg, 50, 150)
 
     seg_color = img.copy()
     seg_color[:,:,0] = 0
-    seg_color[:,:,1] = 0
-    seg_color[:,:,2] = seg_edge
+    seg_color[:,:,1] = seg_edge
+    seg_color[:,:,2] = 0
 
     seg_sum = cv2.add(img.copy(),seg_color.copy())
-    seg_concat_img = cv2.hconcat([img,seg_sum,seg_ori_color])
+    seg_concat_img = cv2.hconcat([img,seg_sum,seg_ori_white])
     
     gt_ori = gt.copy()
 
-    gt_ori_color = img.copy()
-    gt_ori_color[:,:,0] = gt_ori
-    gt_ori_color[:,:,1] = gt_ori
-    gt_ori_color[:,:,2] = gt_ori
+    gt_ori_white = img.copy()
+    gt_ori_white[:,:,0] = gt_ori
+    gt_ori_white[:,:,1] = gt_ori
+    gt_ori_white[:,:,2] = gt_ori
+
+    gt_ori_g = img.copy()
+    gt_ori_g[:,:,0] = 0
+    gt_ori_g[:,:,1] = 0
+    gt_ori_g[:,:,2] = gt_ori
 
     gt_edge = cv2.Canny(gt, 50, 150)
 
@@ -45,9 +55,17 @@ def make_concat_img(img_path, img, gt, seg):
     gt_color[:,:,2] = gt_edge
 
     gt_sum = cv2.add(img.copy(),gt_color.copy())
-    gt_concat_img = cv2.hconcat([img,gt_sum,gt_ori_color])
+    gt_concat_img = cv2.hconcat([img,gt_sum,gt_ori_white])
 
-    concat_img = cv2.vconcat([gt_concat_img,seg_concat_img])
+    all_ori_rg = cv2.add(seg_ori_r.copy(),gt_ori_g.copy())
+    all_sum = cv2.add(img.copy(),cv2.add(seg_color.copy(),gt_color.copy()))
+
+    all_concat_img = cv2.hconcat([img,all_sum,all_ori_rg])
+
+    concat_img = cv2.vconcat([gt_concat_img,seg_concat_img,all_concat_img])
+
+    #cv2.imshow("1",concat_img)
+    #cv2.waitKey(0)
 
     concat_img_path = "./concat/" + img_path.split("\\")[-1]
     cv2.imwrite(concat_img_path, concat_img)
