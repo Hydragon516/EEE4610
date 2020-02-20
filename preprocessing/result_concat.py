@@ -2,6 +2,7 @@ import cv2
 import glob
 import os
 import threading
+import numpy as np
 
 def make_folder(folder_path):
     try:
@@ -12,7 +13,18 @@ def make_folder(folder_path):
             print("Failed to create directory")
             raise
 
+def calc_dsc(seg,gt):
+    gt_normal = gt / 255
+    seg_normal = seg / 255
+
+    A_Intersect_G = np.multiply(gt_normal, seg_normal)
+            
+    DSC = (2 * np.sum(A_Intersect_G)) / (np.sum(gt_normal) + np.sum(seg_normal))
+    return DSC
+
 def make_concat_img(img_path, img, gt, seg):
+    DSC = calc_dsc(seg,gt)
+
     seg_ori = seg.copy()
 
     seg_ori_white = img.copy()
@@ -63,12 +75,22 @@ def make_concat_img(img_path, img, gt, seg):
     all_concat_img = cv2.hconcat([img,all_sum,all_ori_rg])
 
     concat_img = cv2.vconcat([gt_concat_img,seg_concat_img,all_concat_img])
+    resize_concat_img = cv2.resize(concat_img, (512*3,512*3))
 
-    #cv2.imshow("1",concat_img)
+    font = cv2.FONT_ITALIC
+    fontScale = 0.8
+    color = (255, 255, 255)
+    thickness = 1
+
+    cv2.putText(resize_concat_img, 'Ground Truth', (512*2,512*0+30), font, fontScale, color, thickness)
+    cv2.putText(resize_concat_img, 'Detect Result', (512*2,512*1+30), font, fontScale, color, thickness)
+    cv2.putText(resize_concat_img, 'DSC : %.3f' % DSC, (512*2,512*2+30), font, fontScale, color, thickness)
+
+    #cv2.imshow("1",resize_concat_img)
     #cv2.waitKey(0)
 
     concat_img_path = "./concat/" + img_path.split("\\")[-1]
-    cv2.imwrite(concat_img_path, concat_img)
+    cv2.imwrite(concat_img_path, resize_concat_img)
 
 gt_list = sorted(glob.glob('./result/GT*.jpg'))
 seg_list = sorted(glob.glob('./result/SEG*.jpg'))
