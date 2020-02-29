@@ -89,12 +89,17 @@ def make_concat_img(img_path, img, gt, seg):
     #cv2.imshow("1",resize_concat_img)
     #cv2.waitKey(0)
 
-    concat_img_path = "./concat/" + img_path.split("\\")[-1]
+    #concat_img_path = "./concat/" + img_path.split("\\")[-1]
+    concat_img_path = "./concat/" + "/".join(img_path.split("\\")[1:])
     cv2.imwrite(concat_img_path, resize_concat_img)
 
-gt_list = sorted(glob.glob('./result/GT*.jpg'))
-seg_list = sorted(glob.glob('./result/SEG*.jpg'))
-img_list = sorted(glob.glob('./result/IMAGE*.jpg'))
+#gt_list = sorted(glob.glob('./result/GT*.jpg'))
+#seg_list = sorted(glob.glob('./result/SEG*.jpg'))
+#img_list = sorted(glob.glob('./result/IMAGE*.jpg'))
+
+gt_list = sorted(glob.glob('./result\\*\\GT*.jpg'))
+seg_list = sorted(glob.glob('./result\\*\\SEG*.jpg'))
+img_list = sorted(glob.glob('./result\\*\\IMAGE*.jpg'))
 
 for index, img_path in enumerate(img_list):
     gt = cv2.imread(gt_list[index], cv2.IMREAD_GRAYSCALE)
