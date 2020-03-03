@@ -3,6 +3,7 @@ import glob
 import os
 import threading
 import numpy as np
+import errno
 
 def make_folder(folder_path):
     try:
@@ -23,6 +24,9 @@ def calc_dsc(seg,gt):
     return DSC
 
 def make_concat_img(img_path, img, gt, seg):
+    ret, gt = cv2.threshold(gt,127,255,cv2.THRESH_BINARY)
+    ret, seg = cv2.threshold(seg,127,255,cv2.THRESH_BINARY)
+
     DSC = calc_dsc(seg,gt)
 
     seg_ori = seg.copy()
@@ -101,13 +105,14 @@ gt_list = sorted(glob.glob('./result\\*\\GT*.jpg'))
 seg_list = sorted(glob.glob('./result\\*\\SEG*.jpg'))
 img_list = sorted(glob.glob('./result\\*\\IMAGE*.jpg'))
 
+for img_path in img_list:
+    folder_path = "./concat/" + img_path.split("\\")[1]
+    make_folder(folder_path)
+
 for index, img_path in enumerate(img_list):
     gt = cv2.imread(gt_list[index], cv2.IMREAD_GRAYSCALE)
     seg = cv2.imread(seg_list[index], cv2.IMREAD_GRAYSCALE)
     img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-
-    ret, gt = cv2.threshold(gt,127,255,cv2.THRESH_BINARY)
-    ret, seg = cv2.threshold(seg,127,255,cv2.THRESH_BINARY)
 
     #make_concat_img(img_path, img, gt, seg)
     t_concat = threading.Thread(target=make_concat_img, args=(img_path, img, gt, seg))
