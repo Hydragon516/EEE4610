@@ -73,16 +73,30 @@ def save_dataset(test_img_lung, test_img_lists, train_img_lung, train_img_lists)
     with open('dataset.pickle', 'wb') as f:
         pickle.dump(lung_num, f)
         print("save dataset")
+        
+def load_list(img_lists, lung_list):
+    load_img_list = list()
+    for img in img_lists:
+        for lung_num in lung_list:
+            if img.split("_")[0] == lung_num:
+                load_img_list.append(img)
+    return load_img_list
 
-def load_dataset():
+def load_dataset(img_path):
     with open('dataset.pickle', 'rb') as f:
         lung_num = pickle.load(f)
         print("load dataset")
-    return lung_num[0], lung_num[1], lung_num[2], lung_num[3]
+
+    img_lists = np.array(sorted(os.walk(img_path).__next__()[2]))
+    #mask_lists = np.array(sorted(os.walk(mask_path).__next__()[2]))
+
+    test_img_lists = load_list(img_lists, lung_num[0])
+    train_img_lists = load_list(img_lists, lung_num[2])
+    return lung_num[0], test_img_lists, lung_num[2], train_img_lists
 
 if __name__ is "__main__":
-    img_path="./remove_250/image"
-    mask_path="./remove_250/mask"
+    img_path="./remove_1/image"
+    mask_path="./remove_1/mask"
     #val_img_lung, val_img_lists, test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_img_set(img_path, mask_path, 500*4, 1000*4)
-    test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_test_set(img_path, mask_path, 500*4)
-    #a, b, c ,d = load_dataset()
+    #test_img_lung, test_img_lists, train_img_lung, train_img_lists = split_test_set(img_path, mask_path, 500*4)
+    a, b, c ,d = load_dataset(img_path, mask_path)
