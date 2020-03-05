@@ -77,11 +77,12 @@ def high_and_low(img, high, low):
 def onChange(x): 
     pass 
 
-cv2.namedWindow('Setting', cv2.WINDOW_NORMAL) 
+cv2.namedWindow('Setting', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('Setting', 600, 170)
 cv2.createTrackbar('IMAGE', 'Setting', 0, len(image_list)-1, onChange)
 cv2.createTrackbar('LOW', 'Setting', 0, 255, onChange)
 cv2.createTrackbar('HIGH','Setting', 0, 255, onChange)
-switch = "0: Gray\n1: Jet"
+switch = "Gray-Jet"
 cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 
 ###
