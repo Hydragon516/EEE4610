@@ -12,32 +12,17 @@ print("Num of image :", len(image_list))
 print("Num of mask :", len(mask_list))
 
 lung_buf = 0
-lung_num = []
+lung_list = []
 image_list = []
 
-for mask_dir in mask_list:
-    #./remove_250/image\001_000067.jpg
+for mask_dir in mask_list: #./remove_250/image\001_000067.jpg
+    image_list.append(mask_dir.split("\\")[1])
     if lung_buf != int((mask_dir.split("\\")[1]).split("_")[0]):
-        lung_num.append(int((mask_dir.split("\\")[1]).split("_")[0]))
+        lung_list.append(int((mask_dir.split("\\")[1]).split("_")[0]))
         lung_buf = int((mask_dir.split("\\")[1]).split("_")[0])
 
-print("\nFound " + str(len(lung_num)) + " lungs")
-
-print("\nNow search mask data...")
-
-for num in lung_num:
-    mask_size_buf = 0
-    for mask_dir in mask_list:
-        if num == int((mask_dir.split("\\")[1]).split("_")[0]):
-            mask = cv2.imread(mask_dir, 0)
-            mask_size = np.sum(mask)/255
-            if mask_size > mask_size_buf:
-                image_buf = mask_dir.split("\\")[1]
-                mask_size_buf = mask_size
-        
-    image_list.append(image_buf)
-
-print("Complete!")
+print("\nFound " + str(len(lung_list)) + " lungs")
+print("Found " + str(len(image_list)) + " images")
 
 def make_concat_img(img, gt):
     ret, gt = cv2.threshold(gt,127,255,cv2.THRESH_BINARY)
@@ -77,19 +62,34 @@ def high_and_low(img, high, low):
 def onChange(x): 
     pass 
 
+def load_list(image_list, lung_num):
+    load = []
+    for fname in image_list:
+        if int(fname.split("_")[0]) == lung_num:
+            load.append(fname)
+
+    return load
+
+
 cv2.namedWindow('Setting', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('Setting', 600, 170)
-cv2.createTrackbar('IMAGE', 'Setting', 0, len(image_list)-1, onChange)
+cv2.resizeWindow('Setting', 600, 200)
+
+current_list = load_list(image_list, 1)
+
+cv2.createTrackbar('LUNG', 'Setting', 0, len(lung_list)-1, onChange)
+cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
+
 cv2.createTrackbar('LOW', 'Setting', 0, 255, onChange)
 cv2.createTrackbar('HIGH','Setting', 0, 255, onChange)
 switch = "Gray-Jet"
 cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 
 ###
-num = 0
-img = cv2.imread(image_path + "/" + image_list[num], 1)
+lung_num_buf = 0
+img_num_buf = 0
+img = cv2.imread(image_path + "/" + image_list[0], 1)
 img_buf = img.copy()
-mask = cv2.imread(mask_path + "/" + image_list[num], 0)
+mask = cv2.imread(mask_path + "/" + image_list[0], 0)
 img = make_concat_img(img, mask)
 cv2.setTrackbarPos('HIGH','Setting', 255)
 low = cv2.getTrackbarPos('LOW', 'Setting') 
@@ -97,17 +97,28 @@ high = cv2.getTrackbarPos('HIGH', 'Setting')
 ###
 
 while True: 
+    lung_num = cv2.getTrackbarPos('LUNG', 'Setting')
     img_num = cv2.getTrackbarPos('IMAGE', 'Setting')
     img = img_buf.copy()
-    if num != img_num:
-        img = cv2.imread(image_path + "/" + image_list[img_num], 1)
-        mask = cv2.imread(mask_path + "/" + image_list[img_num], 0)
+
+    if lung_num_buf != lung_num:
+        current_list = load_list(image_list, lung_list[lung_num])
+        cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
+
+        img = cv2.imread(image_path + "/" + current_list[img_num], 1)
+        mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
         img_buf = img.copy()
+
+    if lung_num_buf != img_num:
+        img = cv2.imread(image_path + "/" + current_list[img_num], 1)
+        mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
+        img_buf = img.copy()
+
 
     img = high_and_low(img, high, low)
     img = make_concat_img(img, mask)
     
-    num = img_num
+    lung_num_buf = lung_num
 
     color_map = cv2.getTrackbarPos(switch, 'Setting') 
 
