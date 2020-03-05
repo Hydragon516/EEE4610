@@ -96,7 +96,9 @@ low = cv2.getTrackbarPos('LOW', 'Setting')
 high = cv2.getTrackbarPos('HIGH', 'Setting') 
 ###
 
-while True: 
+while True:
+    setting_img = np.zeros((50, 512, 3), np.uint8)
+
     lung_num = cv2.getTrackbarPos('LUNG', 'Setting')
     img_num = cv2.getTrackbarPos('IMAGE', 'Setting')
     img = img_buf.copy()
@@ -114,7 +116,6 @@ while True:
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
         img_buf = img.copy()
 
-
     img = high_and_low(img, high, low)
     img = make_concat_img(img, mask)
     
@@ -125,6 +126,12 @@ while True:
     if color_map == 1:
         img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
 
+    cv2.putText(setting_img, "Lung : " + str(lung_list[lung_num]), \
+        (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+    cv2.putText(setting_img, "IMAGE : " + str(current_list[img_num]), \
+        (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+    
+    img = cv2.vconcat([img, setting_img])
     cv2.imshow('image', img)
 
     low = cv2.getTrackbarPos('LOW', 'Setting') 
