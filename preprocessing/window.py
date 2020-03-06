@@ -1,6 +1,7 @@
 import glob
 import numpy as np
 import cv2
+import time
 
 image_path = "./remove_250/image"
 mask_path = "./remove_250/mask"
@@ -59,7 +60,10 @@ def window_set(img, low, high):
     img[img < low] = 0
     img[img > high] = 255
     img[img >= low] = img[img >= low] - low
-    img[img <= high] = img[img <= high] / np.unique(img)[-2] * 255
+    
+    img[img <= high] = img[img <= high] * (255 / np.unique(img)[-2])
+    # img[img <= high] = img[img <= high] / np.unique(img)[-2] * 255
+    
     img[img > 255] = 255
 
     img = np.array(img, dtype="uint8")
@@ -167,6 +171,7 @@ while True:
     low = cv2.getTrackbarPos('LOW', 'Setting') 
     high = cv2.getTrackbarPos('HIGH', 'Setting')
     HU_low, HU_high = cvt_HU(low, high)
+
     k = cv2.waitKey(1) 
 
     if k == 27: 
