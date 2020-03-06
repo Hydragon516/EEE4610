@@ -152,7 +152,7 @@ while True:
     color_map = cv2.getTrackbarPos(switch, 'Setting') 
 
     if color_map == 1:
-        img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
+        show_img = cv2.applyColorMap(show_img, cv2.COLORMAP_JET)
 
     cv2.putText(setting_img, "Lung : " + str(lung_list[lung_num]), \
         (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
