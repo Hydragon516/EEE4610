@@ -6,7 +6,7 @@ image_path = "./remove_250/image"
 mask_path = "./remove_250/mask"
 
 image_list = glob.glob(image_path + "/*")
-mask_list = glob.glob(image_path + "/*")
+mask_list = glob.glob(mask_path + "/*")
 
 print("Num of image :", len(image_list))
 print("Num of mask :", len(mask_list))
@@ -50,14 +50,27 @@ def make_concat_img(img, gt):
 
     return gt_sum
 
-def high_and_low(img, high, low):
+def window_set(img, low, high):
+    low = int((low + 1000) / 4095 * 255)
+    high = int((high + 1000) / 4095 * 255)
+
+
     img = np.array(img, dtype="uint16")
-    img[img > 5] = img[img > 5] + (255 - high)
+
     img[img < low] = 0
-    img[img > 255] = 255
+    img[img > high] = 255
+    img[img >= low] = img[img >= low] - low
+    img = img / np.max(img) * 255
+
     img = np.array(img, dtype="uint8")
 
     return img
+
+def cvt_HU(low, high):
+    low = low - 1000
+    high = high - 1000 
+
+    return low, high
 
 def onChange(x): 
     pass 
@@ -79,8 +92,8 @@ current_list = load_list(image_list, 1)
 cv2.createTrackbar('LUNG', 'Setting', 0, len(lung_list)-1, onChange)
 cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
 
-cv2.createTrackbar('LOW', 'Setting', 0, 255, onChange)
-cv2.createTrackbar('HIGH','Setting', 0, 255, onChange)
+cv2.createTrackbar('LOW', 'Setting', 0, 4095, onChange)
+cv2.createTrackbar('HIGH','Setting', 0, 4095, onChange)
 switch = "Gray-Jet"
 cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 
@@ -91,32 +104,46 @@ img = cv2.imread(image_path + "/" + image_list[0], 1)
 img_buf = img.copy()
 mask = cv2.imread(mask_path + "/" + image_list[0], 0)
 img = make_concat_img(img, mask)
-cv2.setTrackbarPos('HIGH','Setting', 255)
+cv2.setTrackbarPos('HIGH','Setting', 4095)
 low = cv2.getTrackbarPos('LOW', 'Setting') 
-high = cv2.getTrackbarPos('HIGH', 'Setting') 
+high = cv2.getTrackbarPos('HIGH', 'Setting')
+HU_high = 3095
+HU_low = -1000
 ###
 
 while True:
-    setting_img = np.zeros((50, 512, 3), np.uint8)
+    setting_img = np.zeros((100, 512, 3), np.uint8)
 
     lung_num = cv2.getTrackbarPos('LUNG', 'Setting')
     img_num = cv2.getTrackbarPos('IMAGE', 'Setting')
     img = img_buf.copy()
 
     if lung_num_buf != lung_num:
+        cv2.setTrackbarPos('IMAGE','Setting', 0)
+        img_num = 0
+        img_num_buf = 0
         current_list = load_list(image_list, lung_list[lung_num])
         cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
 
         img = cv2.imread(image_path + "/" + current_list[img_num], 1)
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
+        
+        HU_low, HU_high = cvt_HU(low, high)
+        
         img_buf = img.copy()
+        lung_num_buf = lung_num
 
-    if lung_num_buf != img_num:
+    if img_num_buf != img_num:
+        current_list = load_list(image_list, lung_list[lung_num])
         img = cv2.imread(image_path + "/" + current_list[img_num], 1)
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
         img_buf = img.copy()
 
-    img = high_and_low(img, high, low)
+        HU_low, HU_high = cvt_HU(low, high)
+
+        img_num_buf = img_num
+
+    img = window_set(img, HU_low, HU_high)
     img = make_concat_img(img, mask)
     
     lung_num_buf = lung_num
@@ -130,12 +157,15 @@ while True:
         (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     cv2.putText(setting_img, "IMAGE : " + str(current_list[img_num]), \
         (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+    cv2.putText(setting_img, "SETTING : " + str(HU_low) + " ~ " + str(HU_high), \
+        (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     
     img = cv2.vconcat([img, setting_img])
     cv2.imshow('image', img)
 
     low = cv2.getTrackbarPos('LOW', 'Setting') 
     high = cv2.getTrackbarPos('HIGH', 'Setting')
+    HU_low, HU_high = cvt_HU(low, high)
     k = cv2.waitKey(1) 
 
     if k == 27: 
