@@ -92,8 +92,8 @@ current_list = load_list(image_list, 1)
 cv2.createTrackbar('LUNG', 'Setting', 0, len(lung_list)-1, onChange)
 cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
 
-cv2.createTrackbar('LOW', 'Setting', 0, 4095, onChange)
-cv2.createTrackbar('HIGH','Setting', 0, 4095, onChange)
+cv2.createTrackbar('LOW', 'Setting', 0, 4094, onChange)
+cv2.createTrackbar('HIGH','Setting', 0, 4094, onChange)
 switch = "Gray-Jet"
 cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 
@@ -104,7 +104,7 @@ img = cv2.imread(image_path + "/" + image_list[0], 1)
 img_buf = img.copy()
 mask = cv2.imread(mask_path + "/" + image_list[0], 0)
 img = make_concat_img(img, mask)
-cv2.setTrackbarPos('HIGH','Setting', 4095)
+cv2.setTrackbarPos('HIGH','Setting', 4094)
 low = cv2.getTrackbarPos('LOW', 'Setting') 
 high = cv2.getTrackbarPos('HIGH', 'Setting')
 HU_high = 3095
