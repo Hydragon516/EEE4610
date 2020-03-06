@@ -54,13 +54,13 @@ def window_set(img, low, high):
     low = int((low + 1000) / 4095 * 255)
     high = int((high + 1000) / 4095 * 255)
 
-
     img = np.array(img, dtype="uint16")
 
     img[img < low] = 0
     img[img > high] = 255
     img[img >= low] = img[img >= low] - low
-    img = img / np.max(img) * 255
+    img[img <= high] = img[img <= high] / np.unique(img)[-2] * 255
+    img[img > 255] = 255
 
     img = np.array(img, dtype="uint8")
 
@@ -143,8 +143,9 @@ while True:
 
         img_num_buf = img_num
 
-    img = window_set(img, HU_low, HU_high)
-    img = make_concat_img(img, mask)
+    show_img = img.copy()
+    show_img = window_set(show_img, HU_low, HU_high)
+    show_img = make_concat_img(show_img, mask)
     
     lung_num_buf = lung_num
 
@@ -160,8 +161,8 @@ while True:
     cv2.putText(setting_img, "SETTING : " + str(HU_low) + " ~ " + str(HU_high), \
         (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     
-    img = cv2.vconcat([img, setting_img])
-    cv2.imshow('image', img)
+    show_img = cv2.vconcat([show_img, setting_img])
+    cv2.imshow('image', show_img)
 
     low = cv2.getTrackbarPos('LOW', 'Setting') 
     high = cv2.getTrackbarPos('HIGH', 'Setting')
