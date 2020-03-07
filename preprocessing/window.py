@@ -1,7 +1,7 @@
 import glob
 import numpy as np
 import cv2
-import time
+import os
 
 image_path = "./remove_250/image"
 mask_path = "./remove_250/mask"
@@ -64,7 +64,7 @@ def window_set(img, low, high):
     img[img <= high] = img[img <= high] * (255 / np.unique(img)[-2])
     # img[img <= high] = img[img <= high] / np.unique(img)[-2] * 255
     
-    img[img > 255] = 255
+    img[img >= 255] = 255
 
     img = np.array(img, dtype="uint8")
 
@@ -75,6 +75,24 @@ def cvt_HU(low, high):
     high = high - 1000 
 
     return low, high
+
+def save_image(current_list, HU_low, HU_high):
+    result_dir = "./save/" + str(current_list[0].split("_")[0])
+
+    try:
+        if not(os.path.isdir(result_dir)):
+            os.makedirs(os.path.join(result_dir))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            print("Failed to create directory!!!!!")
+            raise
+
+    for img_name in current_list:
+        img = cv2.imread(image_path + "/" + img_name, 1)
+        img = window_set(img, HU_low, HU_high)
+        cv2.imwrite(result_dir + "/" + img_name, img)
+        print("save " + img_name)
+
 
 def onChange(x): 
     pass 
@@ -148,7 +166,15 @@ while True:
         img_num_buf = img_num
 
     show_img = img.copy()
-    show_img = window_set(show_img, HU_low, HU_high)
+    show_img = cv2.cvtColor(show_img, cv2.COLOR_BGR2GRAY)
+
+    if HU_high > HU_low:
+        show_img = window_set(show_img, HU_low, HU_high)
+
+        if cv2.waitKey(33) == ord("s"):
+            save_image(current_list, HU_low, HU_high)
+    
+    show_img = cv2.cvtColor(show_img, cv2.COLOR_GRAY2BGR)
     show_img = make_concat_img(show_img, mask)
     
     lung_num_buf = lung_num
@@ -170,11 +196,9 @@ while True:
 
     low = cv2.getTrackbarPos('LOW', 'Setting') 
     high = cv2.getTrackbarPos('HIGH', 'Setting')
-    HU_low, HU_high = cvt_HU(low, high)
+    HU_low, HU_high = cvt_HU(low, high) 
 
-    k = cv2.waitKey(1) 
-
-    if k == 27: 
+    if cv2.waitKey(1) == 27: 
         break 
     
 cv2.destroyAllWindows()
