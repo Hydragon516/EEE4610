@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 import os
 
-image_path = "./remove_250/image"
-mask_path = "./remove_250/mask"
+image_path = "./remove/image"
+mask_path = "./remove/mask"
 
 image_list = glob.glob(image_path + "/*")
 mask_list = glob.glob(mask_path + "/*")
@@ -51,32 +51,21 @@ def make_concat_img(img, gt):
 
     return gt_sum
 
-def window_set(img, low, high):
-    low = int((low + 1000) / 4095 * 255)
-    high = int((high + 1000) / 4095 * 255)
+def window_set(img, WL, WW):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = img.astype('float32')
+    img = img - WL
+    img = img * 4096 / WW
+    img = img + 4096 / 2
 
-    img = np.array(img, dtype="uint16")
-
-    img[img < low] = 0
-    img[img > high] = 255
-    img[img >= low] = img[img >= low] - low
-    
-    img[img <= high] = img[img <= high] * (255 / np.unique(img)[-2])
-    # img[img <= high] = img[img <= high] / np.unique(img)[-2] * 255
-    
-    img[img >= 255] = 255
-
-    img = np.array(img, dtype="uint8")
+    img[img < 0] = 0
+    img[img > 4095] = 4095
+    img = img.astype('uint16')
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     return img
 
-def cvt_HU(low, high):
-    low = low - 1000
-    high = high - 1000 
-
-    return low, high
-
-def save_image(current_list, HU_low, HU_high):
+def save_image(current_list, WL, WW):
     result_dir = "./save/" + str(current_list[0].split("_")[0])
 
     try:
@@ -88,10 +77,17 @@ def save_image(current_list, HU_low, HU_high):
             raise
 
     for img_name in current_list:
-        img = cv2.imread(image_path + "/" + img_name, 1)
+        img = cv2.imread(image_path + "/" + img_name, cv2.IMREAD_ANYDEPTH)
         img = window_set(img, HU_low, HU_high)
         cv2.imwrite(result_dir + "/" + img_name, img)
         print("save " + img_name)
+
+def draw_bar(HU_bar, WL, WW):
+    HU_bar = cv2.rectangle(HU_bar, (int((WL - WW / 2) / 4096 * 512), 0), \
+        (int((WL + WW / 2) / 4096 * 512), 50), (0, 0, 255), 2)
+    
+    return HU_bar
+
 
 
 def onChange(x): 
@@ -114,30 +110,38 @@ current_list = load_list(image_list, 1)
 cv2.createTrackbar('LUNG', 'Setting', 0, len(lung_list)-1, onChange)
 cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
 
-cv2.createTrackbar('LOW', 'Setting', 0, 4094, onChange)
-cv2.createTrackbar('HIGH','Setting', 0, 4094, onChange)
+cv2.createTrackbar('WL', 'Setting', 0, 4095, onChange)
+cv2.setTrackbarPos('WL','Setting', 2048)
+cv2.createTrackbar('WW','Setting', 0, 4095, onChange)
+cv2.setTrackbarPos('WW','Setting', 4095)
+
 switch = "Gray-Jet"
 cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 
 ###
 lung_num_buf = 0
 img_num_buf = 0
-img = cv2.imread(image_path + "/" + image_list[0], 1)
+img = cv2.imread(image_path + "/" + image_list[0], cv2.IMREAD_ANYDEPTH)
+img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 img_buf = img.copy()
 mask = cv2.imread(mask_path + "/" + image_list[0], 0)
 img = make_concat_img(img, mask)
-cv2.setTrackbarPos('HIGH','Setting', 4094)
-low = cv2.getTrackbarPos('LOW', 'Setting') 
-high = cv2.getTrackbarPos('HIGH', 'Setting')
-HU_high = 3095
-HU_low = -1000
+
+histogram = np.zeros((50, 512, 3), np.uint8)
+for i in range(512):
+    histogram[:, i] = 255 / 512 * i
 ###
 
 while True:
-    setting_img = np.zeros((100, 512, 3), np.uint8)
+    setting_img = np.zeros((50, 512, 3), np.uint8)
+    for i in range(512):
+        histogram[:, i] = 255 / 512 * i
 
     lung_num = cv2.getTrackbarPos('LUNG', 'Setting')
     img_num = cv2.getTrackbarPos('IMAGE', 'Setting')
+    WL = cv2.getTrackbarPos('WL', 'Setting') 
+    WW = cv2.getTrackbarPos('WW', 'Setting')
+
     img = img_buf.copy()
 
     if lung_num_buf != lung_num:
@@ -147,34 +151,43 @@ while True:
         current_list = load_list(image_list, lung_list[lung_num])
         cv2.createTrackbar('IMAGE', 'Setting', 0, len(current_list)-1, onChange)
 
-        img = cv2.imread(image_path + "/" + current_list[img_num], 1)
+        img = cv2.imread(image_path + "/" + current_list[img_num], cv2.IMREAD_ANYDEPTH)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
-        
-        HU_low, HU_high = cvt_HU(low, high)
         
         img_buf = img.copy()
         lung_num_buf = lung_num
+    
+    else:
+        pass
 
     if img_num_buf != img_num:
         current_list = load_list(image_list, lung_list[lung_num])
-        img = cv2.imread(image_path + "/" + current_list[img_num], 1)
+        img = cv2.imread(image_path + "/" + current_list[img_num], cv2.IMREAD_ANYDEPTH)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
         img_buf = img.copy()
 
-        HU_low, HU_high = cvt_HU(low, high)
-
         img_num_buf = img_num
+    
+    else:
+        pass
 
     show_img = img.copy()
-    show_img = cv2.cvtColor(show_img, cv2.COLOR_BGR2GRAY)
 
-    if HU_high > HU_low:
-        show_img = window_set(show_img, HU_low, HU_high)
+    if (WL - WW / 2 > 0) and WL + WW / 2 < 4096:
+        show_img = window_set(show_img, WL, WW)
 
-        if cv2.waitKey(33) == ord("s"):
-            save_image(current_list, HU_low, HU_high)
+        WL_buf = WL
+        WW_buf = WW
+
+    else:
+        cv2.setTrackbarPos('WL','Setting', WL_buf)
+        cv2.setTrackbarPos('WW','Setting', WW_buf)
+
+    show_img = cv2.convertScaleAbs(show_img, alpha=(255.0/4095.0))
+    show_img = show_img.astype('uint8')
     
-    show_img = cv2.cvtColor(show_img, cv2.COLOR_GRAY2BGR)
     show_img = make_concat_img(show_img, mask)
     
     lung_num_buf = lung_num
@@ -188,15 +201,11 @@ while True:
         (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     cv2.putText(setting_img, "IMAGE : " + str(current_list[img_num]), \
         (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
-    cv2.putText(setting_img, "SETTING : " + str(HU_low) + " ~ " + str(HU_high), \
-        (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     
+    HU_bar = draw_bar(histogram, WL, WW)
     show_img = cv2.vconcat([show_img, setting_img])
+    show_img = cv2.vconcat([show_img, HU_bar])
     cv2.imshow('image', show_img)
-
-    low = cv2.getTrackbarPos('LOW', 'Setting') 
-    high = cv2.getTrackbarPos('HIGH', 'Setting')
-    HU_low, HU_high = cvt_HU(low, high) 
 
     if cv2.waitKey(1) == 27: 
         break 
