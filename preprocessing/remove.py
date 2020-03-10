@@ -50,25 +50,39 @@ def thread_copy(index, img, mask_list, min_mask_size, remove_list, remove_all, i
     img_file_name = img.split("\\")[-1].split(".")[0]
     img_lung_num = int(img_file_name.split("_")[0])
     img_slice_num = int(img_file_name.split("_")[1])
-    reverse_img_slice_num = img_num_list[img_lung_num - 1][1] - img_slice_num
-    new_img = img.split("\\")[0].replace("data","remove") + "/" + img_file_name.split("_")[0] + "_" + "%06d" % reverse_img_slice_num + ".jpg"
+    #reverse_img_slice_num = img_num_list[img_lung_num - 1][1] - img_slice_num
+    new_img = img.split("\\")[0].replace("data","remove") + "/" + img_file_name.split("_")[0] + "_" + "%06d" % img_slice_num + ".png"
 
     mask = mask_list[index]
     mask_file_name = mask.split("\\")[-1].split(".")[0]
     mask_lung_num = int(mask_file_name.split("_")[0])
     mask_slice_num = int(mask_file_name.split("_")[1])
-    reverse_mask_slice_num = mask_num_list[mask_lung_num - 1][1] - mask_slice_num
-    new_mask = mask.split("\\")[0].replace("data","remove") + "/" + mask_file_name.split("_")[0] + "_" + "%06d" % reverse_mask_slice_num + ".jpg"
+    #reverse_mask_slice_num = mask_num_list[mask_lung_num - 1][1] - mask_slice_num
+    new_mask = mask.split("\\")[0].replace("data","remove") + "/" + mask_file_name.split("_")[0] + "_" + "%06d" % mask_slice_num + ".png"
 
     size_flag = check_min_mask_size(min_mask_size,mask)
-    list_flag = check_remove_list(remove_list, img_lung_num, reverse_img_slice_num)
+    list_flag = check_remove_list(remove_list, img_lung_num, img_slice_num)
     all_flag = check_remove_all(remove_all, img_lung_num)
 
     if size_flag and list_flag and all_flag:
+        #with open("log.txt", "a") as f:
+        #    f.write(" ".join([img,new_img,mask,new_mask,"\n"]))
+        #print(img,new_img,mask,new_mask)
     #if True:
         copy_file(img,new_img)
         copy_file(mask,new_mask)
     
+def remove_trash(img_list):
+    trash_list = [14,21,85,95,128,194]
+    for img in img_list:
+        img_file_name = img.split("\\")[-1].split(".")[0]
+        img_lung_num = int(img_file_name.split("_")[0])
+        img_slice_num = int(img_file_name.split("_")[1])
+        new_img = img.split("\\")[0].replace("data","trash") + "/" + img_file_name.split("_")[0] + "_" + "%06d" % img_slice_num + ".png"
+
+        for trash in trash_list:
+            if img_lung_num == trash:
+                shutil.move(img, new_img)
 
 def main():
     with open("통합.txt", 'r', encoding="utf-8") as f:
@@ -87,24 +101,29 @@ def main():
     remove_all = np.array(remove_all).astype("int")
 
     #이미지 경로 설정
-    img_list = sorted(glob.glob('./data/image/*.jpg'))
-    mask_list = sorted(glob.glob('./data/mask/*.jpg'))
+    img_list = sorted(glob.glob('./data/image/*.png'))
+    mask_list = sorted(glob.glob('./data/mask/*.png'))
 
     print(len(img_list), len(mask_list))
     print(img_list[0], mask_list[0])
 
-    # 마스크 최소 픽셀 갯수
-    min_mask_size = 1
+    if len(img_list) == len(mask_list):
+        # 마스크 최소 픽셀 갯수
+        min_mask_size = 1
 
-    #역순 뒤집기 위해 각 환자별 이미지 갯수 탐색
+        #역순 뒤집기 위해 각 환자별 이미지 갯수 탐색
 
-    img_num_list = find_slice_num(img_list)
-    mask_num_list = find_slice_num(mask_list)
+        img_num_list = find_slice_num(img_list)
+        mask_num_list = find_slice_num(mask_list)
 
-    for index, img in enumerate(img_list):
-        #thread_copy(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list)
-        t_crop = threading.Thread(target=thread_copy, args=(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list))
-        t_crop.start()
+        #remove_trash(img_list)
+        #remove_trash(mask_list)
+        for index, img in enumerate(img_list):
+            #thread_copy(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list)
+            t_crop = threading.Thread(target=thread_copy, args=(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list))
+            t_crop.start()
+    else:
+        print("데이터의 갯수가 맞지 않습니다.")
         
 if __name__ is "__main__":
     main()
