@@ -88,8 +88,6 @@ def draw_bar(HU_bar, WL, WW):
     
     return HU_bar
 
-
-
 def onChange(x): 
     pass 
 
@@ -121,9 +119,12 @@ cv2.createTrackbar(switch, 'Setting', 0, 1, onChange)
 ###
 lung_num_buf = 0
 img_num_buf = 0
+WL_buf = -1
+WW_buf = -1
 img = cv2.imread(image_path + "/" + image_list[0], cv2.IMREAD_ANYDEPTH)
 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 img_buf = img.copy()
+show_buf = img.copy()
 mask = cv2.imread(mask_path + "/" + image_list[0], 0)
 img = make_concat_img(img, mask)
 
@@ -156,6 +157,7 @@ while True:
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
         
         img_buf = img.copy()
+        show_buf = window_set(img_buf, WL, WW)
         lung_num_buf = lung_num
     
     else:
@@ -166,24 +168,28 @@ while True:
         img = cv2.imread(image_path + "/" + current_list[img_num], cv2.IMREAD_ANYDEPTH)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         mask = cv2.imread(mask_path + "/" + current_list[img_num], 0)
-        img_buf = img.copy()
 
+        img_buf = img.copy()
+        show_buf = window_set(img_buf, WL, WW)
         img_num_buf = img_num
     
     else:
         pass
 
-    show_img = img.copy()
+    show_img = show_buf.copy()
 
-    if (WL - WW / 2 > 0) and WL + WW / 2 < 4096:
-        show_img = window_set(show_img, WL, WW)
+    if WL_buf != WL or WW_buf != WW:
+        if (WL - WW / 2 > 0) and WL + WW / 2 < 4096:
+            show_img = img.copy()
+            show_img = window_set(show_img, WL, WW)
+            show_buf = show_img.copy()
 
-        WL_buf = WL
-        WW_buf = WW
+            WL_buf = WL
+            WW_buf = WW
 
-    else:
-        cv2.setTrackbarPos('WL','Setting', WL_buf)
-        cv2.setTrackbarPos('WW','Setting', WW_buf)
+        else:
+            cv2.setTrackbarPos('WL','Setting', WL_buf)
+            cv2.setTrackbarPos('WW','Setting', WW_buf)
 
     show_img = cv2.convertScaleAbs(show_img, alpha=(255.0/4095.0))
     show_img = show_img.astype('uint8')
