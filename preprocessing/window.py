@@ -79,6 +79,7 @@ def save_image(current_list, WL, WW):
     for img_name in current_list:
         img = cv2.imread(image_path + "/" + img_name, cv2.IMREAD_ANYDEPTH)
         img = window_set(img, HU_low, HU_high)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         cv2.imwrite(result_dir + "/" + img_name, img)
         print("save " + img_name)
 
@@ -98,6 +99,23 @@ def load_list(image_list, lung_num):
             load.append(fname)
 
     return load
+
+def save_image(current_list, WL, WW):
+    result_dir = "./save/" + str(WL - 1000) + "_" + str(WW) 
+
+    try:
+        if not(os.path.isdir(result_dir)):
+            os.makedirs(os.path.join(result_dir))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            print("Failed to create directory!!!!!")
+            raise
+
+    for img_name in current_list:
+        img = cv2.imread(image_path + "/" + img_name, 1)
+        img = window_set(img, WL, WW)
+        cv2.imwrite(result_dir + "/" + img_name, img)
+        print("save " + img_name)
 
 
 cv2.namedWindow('Setting', cv2.WINDOW_NORMAL)
@@ -131,12 +149,12 @@ img = make_concat_img(img, mask)
 histogram = np.zeros((50, 512, 3), np.uint8)
 for i in range(512):
     histogram[:, i] = 255 / 512 * i
+histogram_buf = histogram.copy()
 ###
 
 while True:
-    setting_img = np.zeros((50, 512, 3), np.uint8)
-    for i in range(512):
-        histogram[:, i] = 255 / 512 * i
+    setting_img = np.zeros((70, 512, 3), np.uint8)
+    histogram = histogram_buf.copy()
 
     lung_num = cv2.getTrackbarPos('LUNG', 'Setting')
     img_num = cv2.getTrackbarPos('IMAGE', 'Setting')
@@ -191,6 +209,11 @@ while True:
             cv2.setTrackbarPos('WL','Setting', WL_buf)
             cv2.setTrackbarPos('WW','Setting', WW_buf)
 
+    if cv2.waitKey(33) == ord("s"):
+        for i in range(len(lung_list)):
+            lists = load_list(image_list, lung_list[i])
+            save_image(lists, WL, WW)
+
     show_img = cv2.convertScaleAbs(show_img, alpha=(255.0/4095.0))
     show_img = show_img.astype('uint8')
     
@@ -206,7 +229,11 @@ while True:
     cv2.putText(setting_img, "Lung : " + str(lung_list[lung_num]), \
         (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     cv2.putText(setting_img, "IMAGE : " + str(current_list[img_num]), \
-        (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+        (120, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+    cv2.putText(setting_img, "WL : " + str(WL - 1000) + "HU", \
+        (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
+    cv2.putText(setting_img, "WW : " + str(WW) + "HU", \
+        (140, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255))
     
     HU_bar = draw_bar(histogram, WL, WW)
     show_img = cv2.vconcat([show_img, setting_img])
