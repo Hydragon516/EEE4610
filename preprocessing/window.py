@@ -94,8 +94,10 @@ def save_image(current_list, WL, WW):
             raise
 
     for img_name in current_list:
-        img = cv2.imread(image_path + "/" + img_name, 1)
+        img = cv2.imread(image_path + "/" + img_name, cv2.IMREAD_ANYDEPTH)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         img = window_set(img, WL, WW)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         cv2.imwrite(result_dir + "/" + img_name, img)
         print("save " + img_name)
 
