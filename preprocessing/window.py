@@ -65,24 +65,6 @@ def window_set(img, WL, WW):
 
     return img
 
-def save_image(current_list, WL, WW):
-    result_dir = "./save/" + str(current_list[0].split("_")[0])
-
-    try:
-        if not(os.path.isdir(result_dir)):
-            os.makedirs(os.path.join(result_dir))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            print("Failed to create directory!!!!!")
-            raise
-
-    for img_name in current_list:
-        img = cv2.imread(image_path + "/" + img_name, cv2.IMREAD_ANYDEPTH)
-        img = window_set(img, HU_low, HU_high)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        cv2.imwrite(result_dir + "/" + img_name, img)
-        print("save " + img_name)
-
 def draw_bar(HU_bar, WL, WW):
     HU_bar = cv2.rectangle(HU_bar, (int((WL - WW / 2) / 4096 * 512), 0), \
         (int((WL + WW / 2) / 4096 * 512), 50), (0, 0, 255), 2)
