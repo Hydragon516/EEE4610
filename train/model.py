@@ -59,7 +59,7 @@ class UnetGenerator(nn.Module):
 
         self.out = nn.Sequential(
             nn.Conv2d(self.num_filter,self.out_dim,3,1,1),
-            nn.ReLU(),
+#             nn.ReLU(),
         )
 
     def forward(self,input):
