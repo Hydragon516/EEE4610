@@ -6,13 +6,13 @@ import split_fcn
 import torch
 import glob
 
-root = "./Crop_new/*"
+root = "./-334_897/*"
 folder = sorted(glob.glob(root))
 
 for path in folder:
     image_size = int(path.split("/")[2])
-    image_path = "./Crop_new/" + str(image_size) + "/Image2"
-    mask_path = "./Crop_new/" + str(image_size) + "/Mask2"
+    image_path = "./-334_897/" + str(image_size) + "/Image"
+    mask_path = "./-334_897/" + str(image_size) + "/Mask"
     
     train_set, val_set, test_set = load_dataset(img_path=image_path, mask_path=mask_path, img_size=image_size, test_num=2000, load=False)
     train_loader = data_loader(train_set, 16)

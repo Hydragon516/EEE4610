@@ -11,7 +11,8 @@ class train():
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        self.criterion = nn.MSELoss()
+#         self.criterion = nn.MSELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def get_val_loss_and_acc(self, val_loader):
@@ -40,8 +41,8 @@ class train():
 
                     AUTO = val_outputs.clone().detach()
                     AUTO = AUTO.cpu().numpy()
-                    AUTO[AUTO > 0.5] = 1
-                    AUTO[AUTO <= 0.5] = 0
+                    AUTO[AUTO > 0.9] = 1
+                    AUTO[AUTO <= 0.9] = 0
 
                     A_Intersect_G = np.multiply(AUTO, GT)
                     

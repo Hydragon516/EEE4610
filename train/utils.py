@@ -1,9 +1,10 @@
 import os
 import torch
 import cv2
+import numpy as np
 
 def save_result(image_size, data_loader, net):
-    result_dir = "./result/" + str(image_size)
+    result_dir = "./result_-334_897/" + str(image_size)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     try:
@@ -28,6 +29,8 @@ def save_result(image_size, data_loader, net):
 
         for i in range(len(images)):
             image = images[i].squeeze()
+            #image = cv2.convertScaleAbs(image, alpha=(255.0/4095.0))
+            
             cv2.imwrite(result_dir + '/' + 'IMAGE' + '_' + str(num) +'_' + str(i+1) + '.jpg', image * 255)
             mask = masks[i].squeeze()
             cv2.imwrite(result_dir + '/' + 'GT' + '_' + str(num) +'_' + str(i+1) + '.jpg', mask * 255)

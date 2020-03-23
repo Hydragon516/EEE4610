@@ -3,6 +3,7 @@ import os
 from torch.utils.data import Dataset
 import cv2
 import torchvision.transforms as transforms
+import numpy as np
 
 class CustomDataset(Dataset):
     def read_data_set(self):
@@ -17,7 +18,7 @@ class CustomDataset(Dataset):
 
         for img_file in task1:
             img_file = os.path.join(self.img_path, img_file)
-            img = cv2.imread(img_file, 0)
+            img = cv2.imread(img_file, cv2.IMREAD_ANYDEPTH)
             if img is not None:
                 all_img_files.append(img_file)
             else:
@@ -28,7 +29,7 @@ class CustomDataset(Dataset):
 
         for mask_file in task2:
             mask_file = os.path.join(self.mask_path, mask_file)
-            mask = cv2.imread(mask_file, 0)
+            mask = cv2.imread(mask_file, cv2.IMREAD_ANYDEPTH)
             if mask is not None:
                 all_mask_files.append(mask_file)
             else:
@@ -58,11 +59,14 @@ class CustomDataset(Dataset):
         self.length = self.img_length
 
     def __getitem__(self, index):
-        image = cv2.imread(self.image_files_path[index], 0)
+        image = cv2.imread(self.image_files_path[index], cv2.IMREAD_ANYDEPTH)
         image = cv2.resize(image, (self.img_size, self.img_size), interpolation=cv2.INTER_CUBIC)
-        mask = cv2.imread(self.mask_files_path[index], 0)
+        mask = cv2.imread(self.mask_files_path[index], cv2.IMREAD_ANYDEPTH)
         mask = cv2.resize(mask, (self.img_size, self.img_size), interpolation=cv2.INTER_CUBIC)
-
+        
+        image = image.astype(np.float32)
+        image = image / 4095
+        
         if self.transforms is not None:
             image = self.transforms(image)
             mask = self.transforms(mask)
