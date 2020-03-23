@@ -116,14 +116,15 @@ def main():
         img_num_list = find_slice_num(img_list)
         mask_num_list = find_slice_num(mask_list)
 
-        #remove_trash(img_list)
-        #remove_trash(mask_list)
         for index, img in enumerate(img_list):
             #thread_copy(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list)
             t_crop = threading.Thread(target=thread_copy, args=(index, img, mask_list, min_mask_size, remove_list, remove_all, img_num_list, mask_num_list))
             t_crop.start()
     else:
         print("데이터의 갯수가 맞지 않습니다.")
+        print("잘못된 데이터를 trash 폴더로 옮깁니다.")
+        remove_trash(img_list)
+        remove_trash(mask_list)
         
 if __name__ is "__main__":
     main()
