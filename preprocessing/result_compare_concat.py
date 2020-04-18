@@ -110,7 +110,8 @@ def make_concat_img(A_img_path, A_img, A_gt, A_seg, B_seg, B_img):
 
     #concat_img_path = "./concat/" + img_path.split("\\")[-1]
     concat_img_path = "./concat/" + "/".join(A_img_path.split("\\")[1:])
-    cv2.imwrite(concat_img_path, resize_concat_img)
+    concat_img_path_dsc = concat_img_path.replace(".jpg", "_%.3f_%.3f.jpg" % (DSC_A, DSC_B))
+    cv2.imwrite(concat_img_path_dsc, resize_concat_img)
     
 def find_same_gt(A_img_path, A_gt, B_gt_list, B_seg_list, B_img_list, B_gt_save):
     file_size = A_img_path.split("\\")[1]
@@ -126,8 +127,8 @@ def find_same_gt(A_img_path, A_gt, B_gt_list, B_seg_list, B_img_list, B_gt_save)
 #seg_list = sorted(glob.glob('./result/SEG*.jpg'))
 #img_list = sorted(glob.glob('./result/IMAGE*.jpg'))
 
-A_name = "result_12bit"
-B_name = "result_tissue"
+A_name = "result_Crop_remove_262_12bit"
+B_name = "result_Crop_-24_2000"
 
 A_gt_list = sorted(glob.glob('./%s\\*\\GT*.jpg' % A_name))
 A_seg_list = sorted(glob.glob('./%s\\*\\SEG*.jpg' % A_name))
@@ -153,8 +154,11 @@ for index, A_img_path in enumerate(A_img_list):
     A_seg = cv2.imread(A_seg_list[index], cv2.IMREAD_GRAYSCALE)
     A_img = cv2.imread(A_img_path, cv2.IMREAD_COLOR)
 
-    B_seg, B_img = find_same_gt(A_img_path, A_gt, B_gt_list, B_seg_list, B_img_list, B_gt_save)
+    try:
+        B_seg, B_img = find_same_gt(A_img_path, A_gt, B_gt_list, B_seg_list, B_img_list, B_gt_save)
 
-    #make_concat_img(A_img_path, A_img, A_gt, A_seg, B_seg, B_img)
-    t_concat = threading.Thread(target=make_concat_img, args=(A_img_path, A_img, A_gt, A_seg, B_seg, B_img))
-    t_concat.start()
+        #make_concat_img(A_img_path, A_img, A_gt, A_seg, B_seg, B_img)
+        t_concat = threading.Thread(target=make_concat_img, args=(A_img_path, A_img, A_gt, A_seg, B_seg, B_img))
+        t_concat.start()
+    except:
+        print("error : %s" %A_img_path)
