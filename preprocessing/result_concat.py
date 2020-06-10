@@ -95,7 +95,8 @@ def make_concat_img(img_path, img, gt, seg):
 
     #concat_img_path = "./concat/" + img_path.split("\\")[-1]
     concat_img_path = "./concat/" + "/".join(img_path.split("\\")[1:])
-    cv2.imwrite(concat_img_path, resize_concat_img)
+    concat_img_path_dsc = concat_img_path.replace(".jpg", "_%.3f.jpg" % DSC)
+    cv2.imwrite(concat_img_path_dsc, resize_concat_img)
 
 #gt_list = sorted(glob.glob('./result/GT*.jpg'))
 #seg_list = sorted(glob.glob('./result/SEG*.jpg'))
