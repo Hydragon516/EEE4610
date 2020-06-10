@@ -1,6 +1,6 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
+import torch
+import torch.nn as nn
+
 def conv_block(in_dim,out_dim,act_fn):
     model = nn.Sequential(
         nn.Conv2d(in_dim,out_dim, kernel_size=3, stride=1, padding=1),
@@ -82,7 +82,7 @@ class UnetGenerator(nn.Module):
 
         self.out = nn.Sequential(
             nn.Conv2d(self.num_filter,self.out_dim,3,1,1),
-            nn.ReLU(),
+            # nn.ReLU(),
         )
 
     def forward(self,input):
@@ -119,4 +119,3 @@ class UnetGenerator(nn.Module):
         out = self.out(up_4)
 
         return out
-
